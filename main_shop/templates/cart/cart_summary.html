@@ -1,0 +1,15 @@
+<!-- templates/cart/cart_summary.html -->
+<div class="space-y-4">
+    <div class="flex justify-between text-sm uppercase tracking-wider">
+        <span>Итого</span>
+        <span class="font-medium">{{ cart.sub_total|floatformat:2 }} ₽</span>
+    </div>
+    <a href="#"
+       hx-get="#"
+       hx-target="#main-content"
+       hx-push-url="true"
+       onclick="closeCart()"
+       class="block w-full bg-black text-white text-center py-3 text-xs uppercase tracking-wider hover:bg-gray-800 transition-colors">
+        Оформить заказ
+    </a>
+</div>

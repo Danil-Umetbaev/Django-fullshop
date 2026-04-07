@@ -1,0 +1,65 @@
+<!-- templates/cart/cart_modal.html -->
+<div id="cart-modal" class="fixed right-0 top-0 h-full w-full max-w-md bg-white z-50 shadow-xl">
+    <div class="flex flex-col h-full">
+        <!-- Header -->
+        <div class="flex justify-between items-center px-6 py-5 border-b border-gray-100">
+            <h2 class="text-sm uppercase tracking-wider font-medium">Корзина (<span id="cart-count">{{ cart.total_items }}</span>)</h2>
+            <button onclick="closeCart()" class="text-gray-400 hover:text-black text-2xl leading-none">&times;</button>
+        </div>
+
+        <!-- Items (scrollable) -->
+        <div class="flex-1 overflow-y-auto px-6 py-6">
+            <div id="cart-items" class="space-y-8">
+                {% for item in cart_items %}
+                    {% include 'cart/cart_item.html' with item=item %}
+                {% empty %}
+                    {% include 'cart/cart_empty.html' %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Footer (summary) -->
+        <div id="cart-summary" class="border-t border-gray-100 px-6 py-5">
+            {% if cart_items %}
+                {% include 'cart/cart_summary.html' %}
+            {% else %}
+                <div class="text-center text-gray-400 text-xs uppercase tracking-wider">Корзина пуста</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Overlay -->
+<div id="cart-overlay" class="fixed inset-0 bg-black/20 z-40 transition-opacity duration-300 opacity-0 pointer-events-none"></div>
+
+<script>
+    function openCart() {
+        const modal = document.getElementById('cart-modal');
+        const overlay = document.getElementById('cart-overlay');
+        modal.classList.add('translate-x-0');
+        modal.classList.remove('translate-x-full');
+        overlay.classList.add('opacity-100', 'pointer-events-auto');
+        overlay.classList.remove('opacity-0', 'pointer-events-none');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeCart() {
+        const modal = document.getElementById('cart-modal');
+        const overlay = document.getElementById('cart-overlay');
+        modal.classList.remove('translate-x-0');
+        modal.classList.add('translate-x-full');
+        overlay.classList.remove('opacity-100', 'pointer-events-auto');
+        overlay.classList.add('opacity-0', 'pointer-events-none');
+        document.body.style.overflow = '';
+        setTimeout(() => {
+            const container = document.getElementById('cart-container');
+            if (container) container.innerHTML = '';
+        }, 300);
+    }
+
+    document.addEventListener('htmx:afterSwap', function(evt) {
+        if (evt.detail.elt.id === 'cart-container' || evt.detail.elt.id === 'cart-modal') {
+            openCart();
+        }
+    });
+</script>

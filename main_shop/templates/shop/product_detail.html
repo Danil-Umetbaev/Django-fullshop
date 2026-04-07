@@ -1,0 +1,132 @@
+<!-- templates/shop/product_detail.html -->
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+        <!-- Левая колонка: изображения (без изменений) -->
+        <div>
+            <div class="aspect-[3/4] overflow-hidden bg-gray-50 mb-4">
+                {% if product.main_image %}
+                    <img src="{{ product.main_image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover" id="main-image">
+                {% else %}
+                    <div class="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">No image</div>
+                {% endif %}
+            </div>
+            {% if product.images.all %}
+            <div class="grid grid-cols-4 gap-2">
+                {% for img in product.images.all %}
+                <div class="aspect-square overflow-hidden bg-gray-50 cursor-pointer" onclick="document.getElementById('main-image').src='{{ img.image.url }}'">
+                    <img src="{{ img.image.url }}" class="w-full h-full object-cover">
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Правая колонка: информация и добавление в корзину -->
+        <div>
+            <h1 class="text-2xl font-medium tracking-tight">{{ product.name }}</h1>
+            <p class="text-sm text-gray-500 mt-1">{{ product.color|default:"" }}</p>
+            <p class="text-xl font-medium mt-4">{{ product.price }} ₽</p>
+
+            <!-- Выбор размера -->
+            {% if product.product_sizes.all %}
+            <div class="mt-6">
+                <div class="text-xs uppercase tracking-wider mb-2">Размер</div>
+                <div class="flex flex-wrap gap-2" id="sizes-container">
+                    {% for ps in product.product_sizes.all %}
+                    <label class="size-label border border-gray-300 px-4 py-2 text-sm hover:border-black transition-colors cursor-pointer {% if not ps.stock %}opacity-50 cursor-not-allowed{% endif %}">
+                        <input type="radio" name="size_id" value="{{ ps.id }}" class="hidden size-radio" {% if not ps.stock %}disabled{% endif %} {% if forloop.first and ps.stock > 0 %}checked{% endif %}>
+                        <span>{{ ps.size.name }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            {% else %}
+            <p class="text-sm text-gray-500 mt-4">Размеры не указаны</p>
+            {% endif %}
+
+            <!-- Кнопка добавления в корзину -->
+            <div class="mt-8">
+                <button id="add-to-cart-btn"
+                        class="w-full border border-black py-3 text-sm uppercase tracking-wider hover:bg-black hover:text-white transition-colors"
+                        hx-post="{% url 'cart:add_to_cart' product.slug %}"
+                        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                        hx-vals='js:{size_id: document.querySelector("input[name=size_id]:checked")?.value, quantity: 1}'
+                        hx-target="#cart-container"
+                        hx-swap="innerHTML"
+                        hx-on::after-request="updateCartCountFromResponse(event)">
+                    Добавить в корзину
+                </button>
+            </div>
+
+            <div class="mt-8 border-t border-gray-100 pt-6">
+                <div class="text-xs uppercase tracking-wider mb-2">Описание</div>
+                <p class="text-sm text-gray-600">{{ product.description|default:"Нет описания" }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Похожие товары (без изменений) -->
+    {% if related_products %}
+    <div class="mt-20">
+        <h2 class="text-sm uppercase tracking-wider text-center mb-8">Вам также может понравиться</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {% for related in related_products %}
+            <div class="product-card group cursor-pointer"
+                 hx-get="{% url 'shop:product_detail' related.slug %}"
+                 hx-target="#main-content"
+                 hx-push-url="true">
+                <div class="aspect-[3/4] overflow-hidden bg-gray-50 mb-3">
+                    {% if related.main_image %}
+                        <img src="{{ related.main_image.url }}" class="product-image w-full h-full object-cover">
+                    {% else %}
+                        <div class="w-full h-full bg-gray-100"></div>
+                    {% endif %}
+                </div>
+                <h3 class="text-xs uppercase tracking-wide text-center">{{ related.name }}</h3>
+                <p class="text-xs text-center text-gray-500 mt-1">{{ related.price }} ₽</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</main>
+
+<script>
+    // Визуальное выделение выбранного размера
+    document.querySelectorAll('.size-radio').forEach(radio => {
+        radio.addEventListener('change', function() {
+            document.querySelectorAll('.size-label').forEach(label => {
+                label.classList.remove('bg-black', 'text-white', 'border-black');
+            });
+            if (this.checked && !this.disabled) {
+                this.closest('.size-label').classList.add('bg-black', 'text-white', 'border-black');
+            }
+        });
+        // Если радио уже выбрано, выделяем родительскую метку
+        if (radio.checked && !radio.disabled) {
+            radio.closest('.size-label').classList.add('bg-black', 'text-white', 'border-black');
+        }
+    });
+
+    // Функция обновления счётчика после ответа сервера
+    function updateCartCountFromResponse(event) {
+        const xhr = event.detail.xhr;
+        if (xhr && xhr.status === 200) {
+            // После успешного добавления вьюха сделает redirect на cart:cart_modal,
+            // поэтому модалка откроется автоматически (благодаря htmx:afterSwap в cart_modal.html)
+            // Но нам нужно обновить счётчик в шапке. Сделаем отдельный запрос к cart:count_cart
+            htmx.ajax('GET', '{% url "cart:count_cart" %}', {
+                target: '#header-cart-count',
+                swap: 'outerHTML',
+                handler: function(elt, response) {
+                    // response - JSON, нужно извлечь total_items
+                    const data = JSON.parse(response);
+                    document.getElementById('header-cart-count').innerText = data.total_items;
+                    if (window.updateHeaderCartCount) {
+                        window.updateHeaderCartCount(data.total_items);
+                    }
+                }
+            });
+        }
+    }
+</script>

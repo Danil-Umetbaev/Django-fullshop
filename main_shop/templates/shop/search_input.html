@@ -1,0 +1,27 @@
+<!-- templates/shop/search_input.html -->
+<div class="relative">
+    <input type="text"
+           name="q"
+           id="search-input"
+           placeholder="ПОИСК"
+           value="{{ search_query|default:'' }}"
+           class="w-40 bg-white border-b border-gray-300 py-1 px-0 text-sm focus:outline-none focus:border-black"
+           hx-get="{% url 'shop:catalog_all' %}"
+           hx-target="#main-content"
+           hx-push-url="true"
+           hx-trigger="input changed delay:300ms"
+           autofocus>
+    <button class="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black"
+            hx-get="{% url 'shop:catalog_all' %}?reset_search=true"
+            hx-target="#search-wrapper"
+            hx-swap="innerHTML">
+        ×
+    </button>
+</div>
+<script>
+    // Optional: keep focus after htmx swap
+    document.addEventListener('htmx:afterSwap', function() {
+        const input = document.getElementById('search-input');
+        if (input) input.focus();
+    });
+</script>

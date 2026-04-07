@@ -1,0 +1,57 @@
+<!-- templates/shop/filter_modal.html -->
+<div class="p-6" xmlns:hx-on="http://www.w3.org/1999/xhtml">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-sm uppercase tracking-wider font-medium">Фильтры</h2>
+        <button class="text-gray-500 hover:text-black text-xl" onclick="document.getElementById('filter-modal').classList.add('hidden')">×</button>
+    </div>
+
+    <form hx-get="{% if current_category %}{% url 'shop:catalog_filter' current_category %}{% else %}{% url 'shop:catalog_all' %}{% endif %}"
+          hx-target="#main-content"
+          hx-push-url="true"
+          hx-on::after-request="document.getElementById('filter-modal').classList.add('hidden')">
+        <input type="hidden" name="q" value="{{ filter_params.q|default:'' }}">
+
+        <div class="space-y-5">
+            <!-- Color -->
+            <div>
+                <label class="block text-xs uppercase tracking-wider mb-1">Цвет</label>
+                <input type="text" name="color" value="{{ filter_params.color|default:'' }}"
+                       class="w-full border border-gray-200 py-2 px-3 text-sm focus:outline-none focus:border-gray-500">
+            </div>
+
+            <!-- Price range -->
+            <div>
+                <label class="block text-xs uppercase tracking-wider mb-1">Цена</label>
+                <div class="flex space-x-3">
+                    <input type="number" name="min_price" value="{{ filter_params.min_price|default:'' }}" placeholder="от"
+                           class="w-1/2 border border-gray-200 py-2 px-3 text-sm focus:outline-none focus:border-gray-500">
+                    <input type="number" name="max_price" value="{{ filter_params.max_price|default:'' }}" placeholder="до"
+                           class="w-1/2 border border-gray-200 py-2 px-3 text-sm focus:outline-none focus:border-gray-500">
+                </div>
+            </div>
+
+            <!-- Size -->
+            <div>
+                <label class="block text-xs uppercase tracking-wider mb-1">Размер</label>
+                <select name="size" class="w-full border border-gray-200 py-2 px-3 text-sm focus:outline-none focus:border-gray-500">
+                    <option value="">Все</option>
+                    {% for size in sizes %}
+                    <option value="{{ size.name }}" {% if filter_params.size == size.name %}selected{% endif %}>{{ size.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="flex justify-between pt-4">
+                <button type="button"
+                        class="text-xs uppercase border border-gray-300 px-4 py-2 hover:border-black transition-colors"
+                        onclick="document.getElementById('filter-modal').classList.add('hidden')">
+                    Отмена
+                </button>
+                <button type="submit"
+                        class="text-xs uppercase bg-black text-white px-4 py-2 hover:bg-gray-800 transition-colors">
+                    Применить
+                </button>
+            </div>
+        </div>
+    </form>
+</div>

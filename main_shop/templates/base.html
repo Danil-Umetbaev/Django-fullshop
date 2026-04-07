@@ -1,0 +1,280 @@
+<!-- templates/base.html -->
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>{% block title %}Cerca Trova{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Cormorant+Garamond:wght@400;500;600&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: white;
+            color: #111;
+            letter-spacing: -0.01em;
+        }
+
+        .logo {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 500;
+            letter-spacing: -0.02em;
+        }
+
+        .nav-link {
+            position: relative;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background-color: #111;
+            transition: width 0.2s ease;
+        }
+        .nav-link:hover::after,
+        .nav-link.active::after {
+            width: 100%;
+        }
+
+        .product-image {
+            transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        }
+        .product-card:hover .product-image {
+            transform: scale(1.02);
+        }
+
+        /* Mobile menu */
+        .mobile-menu {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        .mobile-menu.open {
+            transform: translateX(0);
+        }
+        .hamburger span {
+            display: block;
+            width: 24px;
+            height: 1px;
+            background-color: #111;
+            margin: 5px 0;
+            transition: 0.2s;
+        }
+        .hamburger.active span:nth-child(1) {
+            transform: rotate(-45deg) translate(-4px, 5px);
+        }
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+        }
+        .hamburger.active span:nth-child(3) {
+            transform: rotate(45deg) translate(-4px, -5px);
+        }
+        .overlay {
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s;
+        }
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Loading indicator */
+        .htmx-indicator {
+            opacity: 0;
+            transition: opacity 200ms ease-in;
+        }
+        .htmx-request .htmx-indicator {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-white">
+
+    <!-- Mobile Menu Overlay -->
+    <div id="overlay" class="overlay fixed inset-0 bg-black/20 z-40 md:hidden"></div>
+
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="mobile-menu fixed top-0 left-0 w-80 h-full bg-white z-50 md:hidden shadow-lg">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-8">
+                <div class="logo text-xl font-medium">Cerca Trova</div>
+                <button id="closeMenu" class="hamburger active">
+                    <span></span><span></span><span></span>
+                </button>
+            </div>
+            <nav class="space-y-5">
+                <a href="{% url 'shop:index' %}"
+                   hx-get="{% url 'shop:index' %}"
+                   hx-target="#main-content"
+                   hx-push-url="true"
+                   class="mobile-nav-link block text-sm uppercase tracking-wide text-gray-900 hover:text-gray-600">Главная</a>
+                {% for category in categories %}
+                <a href="{% url 'shop:catalog_filter' category.slug %}"
+                   hx-get="{% url 'shop:catalog_filter' category.slug %}"
+                   hx-target="#main-content"
+                   hx-push-url="true"
+                   class="mobile-nav-link block text-sm uppercase tracking-wide text-gray-900 hover:text-gray-600 {% if current_category == category.slug %}active{% endif %}">
+                    {{ category.name|upper }}
+                </a>
+                {% endfor %}
+            </nav>
+            <div class="mt-8 space-y-3">
+                <a href="#" class="block text-xs uppercase tracking-wide text-gray-600 hover:text-black">SEARCH</a>
+                <a href="#" class="block text-xs uppercase tracking-wide text-gray-600 hover:text-black">ACCOUNT</a>
+                <a href="#" class="block text-xs uppercase tracking-wide text-gray-600 hover:text-black">CART (0)</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="sticky top-0 bg-white/90 backdrop-blur-sm z-30 border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Mobile menu button -->
+                <button id="menuToggle" class="hamburger md:hidden">
+                    <span></span><span></span><span></span>
+                </button>
+
+                <!-- Logo -->
+                <div class="flex-shrink-0">
+                    <a href="{% url 'shop:index' %}"
+                       hx-get="{% url 'shop:index' %}"
+                       hx-target="#main-content"
+                       hx-push-url="true"
+                       class="logo text-xl font-medium tracking-tight">
+                        Cerca Trova
+                    </a>
+                </div>
+
+                <!-- Desktop Navigation -->
+                <nav class="hidden md:flex space-x-8">
+                    <a href="{% url 'shop:catalog_all' %}"
+                           hx-get="{% url 'shop:catalog_all' %}"
+                           hx-target="#main-content"
+                           hx-push-url="true"
+                           class="nav-link text-xs uppercase tracking-wide text-gray-700 hover:text-black {% if current_category == category.slug %}active{% endif %}">
+                            Все категории
+                        </a>
+                    {% for category in categories %}
+                        <a href="{% url 'shop:catalog_filter' category.slug %}"
+                           hx-get="{% url 'shop:catalog_filter' category.slug %}"
+                           hx-target="#main-content"
+                           hx-push-url="true"
+                           class="nav-link text-xs uppercase tracking-wide text-gray-700 hover:text-black {% if current_category == category.slug %}active{% endif %}">
+                            {{ category.name|upper }}
+                        </a>
+                    {% endfor %}
+                </nav>
+
+                <!-- Right icons -->
+                <div class="flex items-center space-x-6">
+                    <div id="search-wrapper">
+                        <button id="search-toggle"
+                                hx-get="{% url 'shop:catalog_all' %}?show_search=true"
+                                hx-target="#search-wrapper"
+                                hx-swap="innerHTML"
+                                class="text-xs uppercase tracking-wide text-gray-700 hover:text-black">
+                            SEARCH
+                        </button>
+                    </div>
+                    <a href="#" class="text-xs uppercase tracking-wide text-gray-700 hover:text-black">ACCOUNT</a>
+                    <a href="{% url 'cart:cart_modal' %}" onclick="openCartModal(event)" class="text-xs uppercase tracking-wide text-gray-700 hover:text-black">CART (<span id="header-cart-count">0</span>)</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Loading indicator (thin line at top) -->
+    <div class="htmx-indicator fixed top-0 left-0 w-full h-0.5 bg-black z-50"></div>
+
+    <!-- Main content -->
+    <div id="main-content"
+         hx-get="{% url 'shop:index' %}"
+         hx-trigger="load"
+         hx-swap="innerHTML">
+        <div class="flex justify-center items-center h-64">
+            <div class="animate-pulse text-gray-400 text-sm">Loading...</div>
+        </div>
+    </div>
+    <div id="cart-container"></div>
+
+    <footer class="border-t border-gray-100 py-8 mt-12 text-gray-500 text-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-3">
+                <div class="logo text-sm">Cerca Trova</div>
+                <div class="flex space-x-6">
+                    <a href="#" class="hover:text-black transition">О бренде</a>
+                    <a href="#" class="hover:text-black transition">Доставка</a>
+                    <a href="#" class="hover:text-black transition">Контакты</a>
+                </div>
+                <div>© 2025 — Все права защищены</div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile menu
+            const menuToggle = document.getElementById('menuToggle');
+            const closeMenu = document.getElementById('closeMenu');
+            const mobileMenu = document.getElementById('mobileMenu');
+            const overlay = document.getElementById('overlay');
+
+            function openMenu() {
+                mobileMenu.classList.add('open');
+                overlay.classList.add('active');
+                menuToggle.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+            function closeMenuFunc() {
+                mobileMenu.classList.remove('open');
+                overlay.classList.remove('active');
+                menuToggle.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+            menuToggle.addEventListener('click', openMenu);
+            closeMenu.addEventListener('click', closeMenuFunc);
+            overlay.addEventListener('click', closeMenuFunc);
+
+            // Close menu after navigation
+            document.addEventListener('htmx:afterRequest', function() {
+                closeMenuFunc();
+            });
+
+            // Update active nav links after htmx
+            document.addEventListener('htmx:afterSettle', function() {
+                const currentPath = window.location.pathname;
+                document.querySelectorAll('.nav-link, .mobile-nav-link').forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === currentPath) {
+                        link.classList.add('active');
+                    }
+                });
+            });
+        });
+        function openCartModal(e) {
+            e.preventDefault();
+            htmx.ajax('GET', '{% url "cart:cart_modal" %}', {
+                target: '#cart-container',
+                swap: 'innerHTML'
+            });
+        }
+
+        // Функция для обновления счётчика (глобальная)
+        window.updateHeaderCartCount = function(count) {
+            const span = document.getElementById('header-cart-count');
+            if (span) span.textContent = count;
+        };
+
+    </script>
+</body>
+</html>
