@@ -1,0 +1,49 @@
+
+{% block title %}Профиль{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-8">
+    <h1 class="text-2xl font-light tracking-wide text-center mb-8">Привет, {{ request.user.first_name|upper }} {{ request.user.last_name|upper }}</h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <!-- Sidebar -->
+        <div class="md:col-span-1">
+            <div class="border-t border-gray-100 pt-4 space-y-2">
+                <a href="{% url 'users:profile' %}" 
+                   hx-get="{% url 'users:profile' %}" 
+                   hx-target="#profile-main-content" 
+                   hx-push-url="true"
+                   class="block text-xs uppercase tracking-wider py-2 {% if request.resolver_match.url_name == 'profile' %}border-l-2 border-black pl-3 font-medium{% else %}text-gray-500{% endif %}">
+                    Аккаунт
+                </a>
+                <a href="#" 
+                  История заказов
+                </a>
+                <a href="{% url 'users:logout' %}" 
+                   hx-get="{% url 'users:logout' %}" 
+                   hx-target="#main-content" 
+                   hx-push-url="true"
+                   class="block text-xs uppercase tracking-wider py-2 text-gray-500">
+                    Выйти
+                </a>
+            </div>
+        </div>
+
+        <!-- Main content (dynamic) -->
+        <div id="profile-main-content" class="md:col-span-3">
+            {% include 'users/partials/account_details.html' with user=user %}
+            <!-- Здесь будет подгружаться order_history или редактирование -->
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('htmx:afterSwap', function(evt) {
+        if (evt.detail.target.id === 'profile-main-content') {
+            // Можно добавить плавное появление
+            evt.detail.target.classList.add('opacity-0');
+            setTimeout(() => evt.detail.target.classList.remove('opacity-0'), 10);
+        }
+    });
+</script>
+{% endblock %}

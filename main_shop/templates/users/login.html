@@ -1,0 +1,47 @@
+{% load static %}
+
+{% block title %}Вход{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto px-4 py-12 md:py-20">
+    <h1 class="text-2xl font-light tracking-wide text-center mb-8">Вход</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="text-red-500 text-xs text-center mb-4">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post" class="space-y-5" hx-post="{% url 'users:login' %}" hx-target="#main-content">
+        {% csrf_token %}
+        <div>
+            {{ form.username }}
+            {% if form.username.errors %}<div class="text-red-500 text-xs mt-1">{{ form.username.errors }}</div>{% endif %}
+        </div>
+        <div>
+            {{ form.password }}
+            {% if form.password.errors %}<div class="text-red-500 text-xs mt-1">{{ form.password.errors }}</div>{% endif %}
+        </div>
+        <div class="flex gap-4 pt-4">
+            <button type="submit" class="flex-1 bg-black text-white py-3 text-xs uppercase tracking-wider hover:bg-gray-800 transition-colors">Войти</button>
+            <a href="{% url 'users:register' %}" hx-get="{% url 'users:register' %}" hx-target="#main-content" hx-push-url="true" class="flex-1 border border-gray-300 text-center py-3 text-xs uppercase tracking-wider hover:border-black transition-colors">Создать аккаунт</a>
+        </div>
+    </form>
+</div>
+
+<style>
+    .dotted-input {
+        width: 100%;
+        border: none;
+        border-bottom: 1px solid #e5e7eb;
+        background: transparent;
+        outline: none;
+        font-size: 0.875rem;
+        padding: 0.5rem 0;
+        transition: border-color 0.2s;
+    }
+    .dotted-input:focus {
+        border-bottom-color: #111;
+    }
+</style>
+{% endblock %}

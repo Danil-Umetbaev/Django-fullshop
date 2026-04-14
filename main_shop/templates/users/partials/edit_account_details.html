@@ -1,0 +1,47 @@
+<form method="post" hx-post="{% url 'users:update_account_details' %}" hx-target="#profile-main-content" class="space-y-4">
+    {% csrf_token %}
+    <div class="grid grid-cols-2 gap-4">
+        <div>{{ form.first_name }}</div>
+        <div>{{ form.last_name }}</div>
+    </div>
+    <div>{{ form.email }}</div>
+    <div>{{ form.company }}</div>
+    <div>{{ form.address1 }}</div>
+    <div>{{ form.address2 }}</div>
+    <div class="grid grid-cols-2 gap-4">
+        <div>{{ form.city }}</div>
+        <div>{{ form.postal_code }}</div>
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+        <div>{{ form.country }}</div>
+        <div>{{ form.province }}</div>
+    </div>
+    <div>{{ form.phone_number }}</div>
+    <div class="flex gap-3 pt-2">
+        <button type="submit" class="text-xs uppercase bg-black text-white px-4 py-2 hover:bg-gray-800">Сохранить</button>
+        <button type="button"
+                hx-get="{% url 'users:account_details' %}"
+                hx-target="#profile-main-content"
+                class="text-xs uppercase border border-gray-300 px-4 py-2 hover:border-black">Отмена</button>
+    </div>
+</form>
+
+<style>
+    .dotted-input {
+        width: 100%;
+        border: none;
+        border-bottom: 1px solid #e5e7eb;
+        background: transparent;
+        outline: none;
+        font-size: 0.875rem;
+        padding: 0.5rem 0;
+        transition: border-color 0.2s;
+    }
+    .dotted-input:focus {
+        border-bottom-color: #111;
+    }
+    select {
+        background: white;
+        cursor: pointer;
+    }
+</style>
