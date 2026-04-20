@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     'shop',
     'cart',
     'users',
+    'orders',
+    'payment'
 ]
 
 MIDDLEWARE = [
@@ -86,8 +88,13 @@ WSGI_APPLICATION = 'main_shop.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('POSTGRES_DB'),
+        'USER': os.getenv('POSTGRES_USER'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
+        'HOST': os.getenv('POSTGRES_HOST'),
+        'PORT': os.getenv('POSTGRES_PORT'),
+        'ATOMIC_REQUESTS': True,
     }
 }
 
@@ -139,3 +146,6 @@ SESSION_SAVE_EVERY_REQUEST = True
 AUTH_USER_MODEL = 'users.CustomUser'
 
 LOGIN_URL = '/users/login/'
+
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
+STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')

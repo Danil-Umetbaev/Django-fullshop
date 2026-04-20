@@ -4,8 +4,8 @@
         <span>Итого</span>
         <span class="font-medium">{{ cart.sub_total|floatformat:2 }} ₽</span>
     </div>
-    <a href="#"
-       hx-get="#"
+    <a href="{% url 'orders:checkout' %}"
+       hx-get="{% url 'orders:checkout' %}"
        hx-target="#main-content"
        hx-push-url="true"
        onclick="closeCart()"
